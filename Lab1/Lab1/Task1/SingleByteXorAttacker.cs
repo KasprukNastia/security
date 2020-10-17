@@ -29,12 +29,12 @@ namespace Lab1.Task1
             _singleByteXor = new SingleByteXor();
         }
 
-        public byte GetSingleByteXorKey(string encryptedMessage)
+        public List<byte> GetSingleByteXorPossibleKeys(string encryptedMessage)
         {
             string decryptedMessage;
             float tempFittingQuotient;
-            float minFittingQuotient = float.MaxValue;            
-            byte resKey = 0;
+            float minFittingQuotient = float.MaxValue;
+            List<byte> resKeys = new List<byte>();
             for (byte key = 1; key <= byte.MaxValue; key++)
             {
                 decryptedMessage = _singleByteXor.Decrypt(encryptedMessage, key).ToLower();
@@ -44,14 +44,19 @@ namespace Lab1.Task1
                 if (tempFittingQuotient < minFittingQuotient)
                 {
                     minFittingQuotient = tempFittingQuotient;
-                    resKey = key;
+                    resKeys.Clear();
+                    resKeys.Add(key);
+                }
+                else if(tempFittingQuotient == minFittingQuotient)
+                {
+                    resKeys.Add(key);
                 }
 
                 if (key == byte.MaxValue)
                     break;
             }
 
-            return resKey;
+            return resKeys;
         }
 
         private float CalcFittingQuotient(string decryptedMessage)
