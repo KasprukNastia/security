@@ -19,25 +19,25 @@ namespace Lab1.Task2
 
             int remainder;
             List<byte> possibleKeysForMessagePart;
-            for(int i = 0; i < keyLength; i++)
+            for (int i = 0; i < keyLength; i++)
             {
                 remainder = i % keyLength;
                 possibleKeysForMessagePart = _singleByteXorAttacker.GetSingleByteXorPossibleKeys(
                     new string(encryptedMessage.Where((letter, index) => index % keyLength == remainder).ToArray()))
                     .Distinct(new RepeatingKeyXorAttackerComparer()).ToList();
-                
-                if(possibleKeysForMessagePart.Count == 1)
+
+                if (possibleKeysForMessagePart.Count == 1)
                 {
                     resultKeys.ForEach(key => key[i] = possibleKeysForMessagePart.First());
                 }
                 else
                 {
-                    List<byte[]> newResultKeys = 
+                    List<byte[]> newResultKeys =
                         new List<byte[]>(resultKeys.Count * possibleKeysForMessagePart.Count);
                     byte[] newKey;
                     foreach (byte possibleKey in possibleKeysForMessagePart)
                     {
-                        foreach(byte[] resultKey in resultKeys)
+                        foreach (byte[] resultKey in resultKeys)
                         {
                             newKey = resultKey.ToArray();
                             newKey[i] = possibleKey;
@@ -53,12 +53,12 @@ namespace Lab1.Task2
 
         private int GetKeyLength(string encryptedMessage)
         {
-            Dictionary<int, float> coincidenceIndices = 
+            Dictionary<int, float> coincidenceIndices =
                 new Dictionary<int, float>(encryptedMessage.Length - 1);
 
             IEnumerable<char> comparedMessage;
             int numberOfMatches = 0;
-            for(int offset = 1; offset < encryptedMessage.Length; offset++)
+            for (int offset = 1; offset < encryptedMessage.Length; offset++)
             {
                 comparedMessage = encryptedMessage.TakeLast(offset)
                     .Concat(encryptedMessage.Take(encryptedMessage.Length - offset));
