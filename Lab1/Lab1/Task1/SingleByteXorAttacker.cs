@@ -6,7 +6,7 @@ namespace Lab1.Task1
 {
     public class SingleByteXorAttacker
     {
-        private readonly Dictionary<char, float> _englishLettersFrequency =
+        public static readonly Dictionary<char, float> OneLetterEnglishFrequency =
             new Dictionary<char, float>
             {
                 ['a'] = 8.2389258F, ['b'] = 1.5051398F, ['c'] = 2.8065007F,
@@ -20,12 +20,12 @@ namespace Lab1.Task1
                 ['y'] = 1.9913847F, ['z'] = 0.0746517F
             };
 
-        private readonly int _englishLettersCount;
+        public static readonly int EnglishLettersCount = OneLetterEnglishFrequency.Keys.Count();
+        
         private readonly SingleByteXor _singleByteXor;
 
         public SingleByteXorAttacker()
         {
-            _englishLettersCount = _englishLettersFrequency.Keys.Count();
             _singleByteXor = new SingleByteXor();
         }
 
@@ -39,7 +39,7 @@ namespace Lab1.Task1
             {
                 decryptedMessage = _singleByteXor.Decrypt(encryptedMessage, key).ToLower();
 
-                tempFittingQuotient = CalcFittingQuotient(decryptedMessage);
+                tempFittingQuotient = CalcOneLetterFittingQuotient(decryptedMessage);
 
                 if (tempFittingQuotient < minFittingQuotient)
                 {
@@ -59,11 +59,11 @@ namespace Lab1.Task1
             return resKeys;
         }
 
-        private float CalcFittingQuotient(string decryptedMessage)
+        public float CalcOneLetterFittingQuotient(string decryptedMessage)
         {
             float currentLetterFrequency;
             float tempDeviationSum = 0;
-            foreach (var letterFrequency in _englishLettersFrequency)
+            foreach (var letterFrequency in OneLetterEnglishFrequency)
             {
                 currentLetterFrequency =
                     decryptedMessage.Count(l => l.Equals(letterFrequency.Key)) * 100 /
@@ -72,7 +72,7 @@ namespace Lab1.Task1
                 tempDeviationSum += Math.Abs(letterFrequency.Value - currentLetterFrequency);
             }
 
-            return tempDeviationSum / _englishLettersCount;
+            return tempDeviationSum / EnglishLettersCount;
         }
     }
 }
