@@ -56,7 +56,7 @@ namespace Lab1
                 twoLettersFrequencies: bigrams,
                 threeLettersFrequencies: trigrams);
 
-            List<Individual> keys = substitutionAttacker.Evaluate();
+            List<Individual> keys = substitutionAttacker.Evaluate().Result;
             keys.Take(10).Select(k => k.Key).ToList().ForEach(Console.WriteLine);
         }
     }
