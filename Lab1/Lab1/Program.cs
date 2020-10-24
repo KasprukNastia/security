@@ -43,20 +43,20 @@ namespace Lab1
             Dictionary<string, float> trigrams = JsonConvert.DeserializeObject<Dictionary<string, float>>(allText);
 
             string thirdTaskEncryptedMessage = "EFFPQLEKVTVPCPYFLMVHQLUEWCNVWFYGHYTCETHQEKLPVMSAKSPVPAPVYWMVHQLUSPQLYWLASLFVWPQLMVHQLUPLRPSQLULQESPBLWPCSVRVWFLHLWFLWPUEWFYOTCMQYSLWOYWYETHQEKLPVMSAKSPVPAPVYWHEPPLUWSGYULEMQTLPPLUGUYOLWDTVSQETHQEKLPVPVSMTLEUPQEPCYAMEWWYTYWDLUULTCYWPQLSEOLSVOHTLUYAPVWLYGDALSSVWDPQLNLCKCLRQEASPVILSLEUMQBQVMQCYAHUYKEKTCASLFPYFLMVHQLUPQLHULIVYASHEUEDUEHQBVTTPQLVWFLRYGMYVWMVFLWMLSPVTTBYUNESESADDLSPVYWCYAMEWPUCPYFVIVFLPQLOLSSEDLVWHEUPSKCPQLWAOKLUYGMQEUEMPLUSVWENLCEWFEHHTCGULXALWMCEWETCSVSPYLEMQYGPQLOMEWCYAGVWFEBECPYASLQVDQLUYUFLUGULXALWMCSPEPVSPVMSBVPQPQVSPCHLYGMVHQLUPQLWLRPOEDVMETBYUFBVTTPENLPYPQLWLRPTEKLWZYCKVPTCSTESQPQULLGYAUMEHVPETFWMEHVPETBZMEHVPETB";
-            //string thirdTaskKey = "adfijmnoquvwxzbceghklprsty";
+            //string thirdTaskKey = "cfgijlnprstuxzabdehkmoqvwy";
             //Console.WriteLine(new Substitution(new string(SingleByteXorAttacker.OneLetterEnglishFrequency.Select(c => c.Key).ToArray()), thirdTaskKey).Decrypt(thirdTaskEncryptedMessage.ToLower()));
 
             var substitutionAttacker = new SubstitutionAttacker(
                 encryptedText: thirdTaskEncryptedMessage,
                 populationSize: 100,
-                iterationsCount: 100,
+                iterationsCount: 500,
                 mutationPercentage: 0.02F,
-                bestPercentage: 20,
+                bestPercentage: 50,
                 toNextGenerationPercentage: 30,
                 twoLettersFrequencies: bigrams,
                 threeLettersFrequencies: trigrams);
 
-            HashSet<Individual> keys = substitutionAttacker.Evaluate();
+            List<Individual> keys = substitutionAttacker.Evaluate();
             keys.Take(10).Select(k => k.Key).ToList().ForEach(Console.WriteLine);
         }
     }

@@ -72,9 +72,9 @@ namespace Lab1.Task3
             ThreeLettersFittingQuotientCoef = threeLettersFittingQuotientCoef;
         }
 
-        public HashSet<Individual> Evaluate()
+        public List<Individual> Evaluate()
         {
-            HashSet<Individual> population = GeneratePoputation(PopulationSize);
+            List<Individual> population = GeneratePoputation(PopulationSize);
 
             var random = new Random();
 
@@ -90,24 +90,9 @@ namespace Lab1.Task3
             {
                 orderedPopulation = population.OrderByDescending(i => i.Fitness);
                 best = orderedPopulation.Take(BestCount).ToList();
-                other = orderedPopulation.TakeLast(PopulationSize - BestCount).ToList();
+                toNextGeneration = orderedPopulation.Skip(BestCount).Take(ToNextGenerationCount).ToList();
 
-                randomPos = random.Next(0, other.Count - 1);
-                toNextGeneration = new List<Individual>(ToNextGenerationCount);
-                if (randomPos < ToNextGenerationCount / 2)
-                {
-                    toNextGeneration.AddRange(other.Take(randomPos + ToNextGenerationCount / 2).Concat(other.TakeLast(ToNextGenerationCount / 2 - randomPos)));
-                }
-                else if (randomPos >= other.Count - ToNextGenerationCount / 2)
-                {
-                    toNextGeneration.AddRange(other.TakeLast(randomPos + ToNextGenerationCount / 2).Concat(other.Take(ToNextGenerationCount / 2 - randomPos)));
-                }
-                else
-                {
-                    toNextGeneration.AddRange(other.Skip(randomPos - ToNextGenerationCount / 2).Take(ToNextGenerationCount));
-                }
-
-                population = new HashSet<Individual>(best, new IndividualsComparer());
+                population = new List<Individual>(best);
                 totalGenerated = 0;
                 mutatedCount = 0;
                 needsMutation = false;
@@ -120,12 +105,14 @@ namespace Lab1.Task3
                         .ForEach(i => population.Add(i));
                     totalGenerated++;
                 }
+
+                population = population.Distinct(new IndividualsComparer()).ToList();
             }
 
             return population;
         }
 
-        private HashSet<Individual> GeneratePoputation(int size)
+        private List<Individual> GeneratePoputation(int size)
         {
             var random = new Random();
             HashSet<Individual> population = new HashSet<Individual>(size, new IndividualsComparer());
@@ -136,7 +123,7 @@ namespace Lab1.Task3
                 population.Add(CalcFitness(individual));
             }
 
-            return population;
+            return population.ToList();
         }
 
         private Individual CalcFitness(Individual individual)
@@ -144,8 +131,8 @@ namespace Lab1.Task3
             var substitution = new Substitution(Alphabet, individual.Key);
             string decryptedMessage = substitution.Decrypt(EncryptedText);
 
-            individual.Fitness = OneLetterFittingQuotientCoef * _singleByteXorAttacker.CalcOneLetterFittingQuotient(decryptedMessage) +
-                    TwoLettersFittingQuotientCoef * CalcTwoLettersFittingQuotient(decryptedMessage) +
+            individual.Fitness = //OneLetterFittingQuotientCoef * _singleByteXorAttacker.CalcOneLetterFittingQuotient(decryptedMessage) +
+                    //TwoLettersFittingQuotientCoef * CalcTwoLettersFittingQuotient(decryptedMessage) +
                     ThreeLettersFittingQuotientCoef * CalcThreeLettersFittingQuotient(decryptedMessage);
 
             return individual;
@@ -156,40 +143,32 @@ namespace Lab1.Task3
             var random = new Random();
             int randomPos = random.Next(1, Alphabet.Length - 1);
 
-            string firstChildKey = null, secondChildKey = null;
-            if (!needsMutation)
+            IEnumerable<char> keyPart = first.Key.Take(randomPos);
+            char[] firstChildKey = keyPart.Concat(second.Key.Where(l => !keyPart.Contains(l))).ToArray();
+
+            keyPart = second.Key.Take(randomPos);
+            char[] secondChildKey = keyPart.Concat(first.Key.Where(l => !keyPart.Contains(l))).ToArray();
+
+            if (needsMutation)
             {
-                // Normal crossover
-                firstChildKey = $"{first.Key.Substring(0, randomPos)}{second.Key.Substring(randomPos, second.Key.Length - randomPos)}";
-                secondChildKey = $"{second.Key.Substring(0, randomPos)}{first.Key.Substring(randomPos, first.Key.Length - randomPos)}";
+                int firstLetterIndex = random.Next(0, randomPos);
+                int secondLetterIndex = random.Next(randomPos, Alphabet.Length - 1);
+
+                Swap(firstChildKey, firstLetterIndex, secondLetterIndex);
+                Swap(secondChildKey, firstLetterIndex, secondLetterIndex);
             }
-            else
-            {
-                // Mutation
-                firstChildKey = new string(
-                    Enumerable.Range(0, Alphabet.Length).Select(index => random.Next(0, 1) == 0 ? first.Key[index] : second.Key[index]).ToArray());
-                secondChildKey = new string(
-                    Enumerable.Range(0, Alphabet.Length).Select(index => random.Next(0, 1) == 0 ? second.Key[index] : first.Key[index]).ToArray());
-            }        
 
             return new List<Individual>
             {
-                CalcFitness(new Individual(PreventRepeats(firstChildKey, first), Alphabet.Length)),
-                CalcFitness(new Individual(PreventRepeats(secondChildKey, second), Alphabet.Length))
+                CalcFitness(new Individual(new string(firstChildKey), Alphabet.Length)),
+                CalcFitness(new Individual(new string(secondChildKey), Alphabet.Length))
             };
 
-            string PreventRepeats(string generated, Individual father)
+            void Swap(char[] childKey, int firstLetterIndex, int secondLetterIndex)
             {
-                List<char> replaced =
-                    generated.Select((letter, index) => generated.Take(index + 1).Contains(letter) ? ' ' : letter).ToList();
-                for (int i = 0; i < replaced.Count; i++)
-                {
-                    if (replaced[i].Equals(' '))
-                    {
-                        replaced[i] = father.Key.First(l => !replaced.Contains(l));
-                    }
-                }
-                return new string(replaced.ToArray());
+                char temp = childKey[firstLetterIndex];
+                childKey[firstLetterIndex] = childKey[secondLetterIndex];
+                childKey[secondLetterIndex] = temp;
             }
         }
 
