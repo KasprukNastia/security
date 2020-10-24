@@ -41,6 +41,7 @@ namespace Lab1
 
             allText = File.ReadAllText($"{basePath}\\trigrams_percentages.json");
             Dictionary<string, float> trigrams = JsonConvert.DeserializeObject<Dictionary<string, float>>(allText);
+            List<EtalonMember> trigramsList = trigrams.Select(t => new EtalonMember { TriGram = t.Key, Frequency = t.Value }).ToList();
 
             string thirdTaskEncryptedMessage = "EFFPQLEKVTVPCPYFLMVHQLUEWCNVWFYGHYTCETHQEKLPVMSAKSPVPAPVYWMVHQLUSPQLYWLASLFVWPQLMVHQLUPLRPSQLULQESPBLWPCSVRVWFLHLWFLWPUEWFYOTCMQYSLWOYWYETHQEKLPVMSAKSPVPAPVYWHEPPLUWSGYULEMQTLPPLUGUYOLWDTVSQETHQEKLPVPVSMTLEUPQEPCYAMEWWYTYWDLUULTCYWPQLSEOLSVOHTLUYAPVWLYGDALSSVWDPQLNLCKCLRQEASPVILSLEUMQBQVMQCYAHUYKEKTCASLFPYFLMVHQLUPQLHULIVYASHEUEDUEHQBVTTPQLVWFLRYGMYVWMVFLWMLSPVTTBYUNESESADDLSPVYWCYAMEWPUCPYFVIVFLPQLOLSSEDLVWHEUPSKCPQLWAOKLUYGMQEUEMPLUSVWENLCEWFEHHTCGULXALWMCEWETCSVSPYLEMQYGPQLOMEWCYAGVWFEBECPYASLQVDQLUYUFLUGULXALWMCSPEPVSPVMSBVPQPQVSPCHLYGMVHQLUPQLWLRPOEDVMETBYUFBVTTPENLPYPQLWLRPTEKLWZYCKVPTCSTESQPQULLGYAUMEHVPETFWMEHVPETBZMEHVPETB";
             //string thirdTaskKey = "cfgijlnprstuxzabdehkmoqvwy";
@@ -54,7 +55,7 @@ namespace Lab1
                 bestPercentage: 50,
                 toNextGenerationPercentage: 30,
                 twoLettersFrequencies: bigrams,
-                threeLettersFrequencies: trigrams);
+                threeLettersFrequencies: trigramsList);
 
             List<Individual> keys = substitutionAttacker.Evaluate().Result;
             keys.Take(10).Select(k => k.Key).ToList().ForEach(Console.WriteLine);

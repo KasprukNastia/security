@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Lab1.Task3
@@ -12,7 +13,7 @@ namespace Lab1.Task3
     public class SubstitutionAttacker
     {
         private readonly Dictionary<string, float> _twoLettersFrequencies;
-        private readonly Dictionary<string, float> _threeLettersFrequencies;
+        private readonly List<EtalonMember> _threeLettersFrequencies;
         private readonly SingleByteXorAttacker _singleByteXorAttacker;
 
         public string Alphabet { get; }
@@ -36,7 +37,7 @@ namespace Lab1.Task3
             int bestPercentage,
             int toNextGenerationPercentage,
             Dictionary<string, float> twoLettersFrequencies,
-            Dictionary<string, float> threeLettersFrequencies,
+            List<EtalonMember> threeLettersFrequencies,
             float oneLetterFittingQuotientCoef = 1,
             float twoLettersFittingQuotientCoef = 1,
             float threeLettersFittingQuotientCoef = 1)
@@ -195,41 +196,65 @@ namespace Lab1.Task3
             }
         }
 
-        private Task<float> CalcTwoLettersFittingQuotient(string decryptedMessage)
-        {
-            List<string> bigrams = decryptedMessage.Select(
-                (letter, index) => index != decryptedMessage.Length - 1 ? $"{letter}{decryptedMessage[index + 1]}" : letter.ToString())
-                .Take(decryptedMessage.Length - 1)
-                .ToList();
+        //private Task<float> CalcTwoLettersFittingQuotient(string decryptedMessage)
+        //{
+        //    List<string> bigrams = decryptedMessage.Select(
+        //        (letter, index) => index != decryptedMessage.Length - 1 ? $"{letter}{decryptedMessage[index + 1]}" : letter.ToString())
+        //        .Take(decryptedMessage.Length - 1)
+        //        .ToList();
 
-            return CalcFittingQuotient(bigrams, _twoLettersFrequencies);
-        }
+        //    return CalcFittingQuotient(bigrams, _twoLettersFrequencies);
+        //}
 
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //private Task<float> CalcThreeLettersFittingQuotient(string decryptedMessage)
+        //{
+        //    List<string> trigrams = decryptedMessage.Select((letter, index) => 
+        //        index != decryptedMessage.Length - 2 ? $"{letter}{decryptedMessage[index + 1]}{decryptedMessage[index + 2]}" : letter.ToString())
+        //        .Take(decryptedMessage.Length - 2)
+        //        .ToList();
+
+        //    return CalcFittingQuotient(trigrams, _threeLettersFrequencies);
+        //}
+
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //private Task<float> CalcFittingQuotient(List<string> splittedMessage, Dictionary<string, float> etalon)
+        //{
+        //    float currentFrequency;
+        //    float tempDeviationSum = 0;
+        //    foreach (var frequency in etalon.Select(e => (e.Key, e.Value)).ToList())
+        //    {
+        //        currentFrequency =
+        //            splittedMessage.Count(val => val.Equals(frequency.Key, StringComparison.Ordinal)) * 100 /
+        //            (float)splittedMessage.Count;
+
+        //        tempDeviationSum += Math.Abs(frequency.Value - currentFrequency);
+        //    }
+
+        //    return Task.FromResult(tempDeviationSum / etalon.Count);
+        //}
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Task<float> CalcThreeLettersFittingQuotient(string decryptedMessage)
         {
-            List<string> trigrams = decryptedMessage.Select((letter, index) => 
-                index != decryptedMessage.Length - 2 ? $"{letter}{decryptedMessage[index + 1]}{decryptedMessage[index + 2]}" : letter.ToString())
-                .Take(decryptedMessage.Length - 2)
-                .ToList();
-
-            return CalcFittingQuotient(trigrams, _threeLettersFrequencies);
-        }
-
-        private Task<float> CalcFittingQuotient(List<string> splittedMessage, Dictionary<string, float> etalon)
-        {
+            int counter = 0, index = -3;
             float currentFrequency;
             float tempDeviationSum = 0;
-            foreach (var frequency in etalon.Select(e => (e.Key, e.Value)).ToList())
+            foreach (var frequency in _threeLettersFrequencies)
             {
-                currentFrequency =
-                    splittedMessage.Count(val => val.Equals(frequency.Key)) * 100 /
-                    (float)splittedMessage.Count;
+                while(index >= 0 && index < decryptedMessage.Length - 2)
+                {
+                    index = decryptedMessage.IndexOf(frequency.TriGram, index + 1, StringComparison.Ordinal);
+                    if (index >= 0)
+                        counter++;
+                }               
 
-                tempDeviationSum += Math.Abs(frequency.Value - currentFrequency);
+                currentFrequency = counter * 100 / decryptedMessage.Length - 2;
+                tempDeviationSum += Math.Abs(frequency.Frequency - currentFrequency);
             }
 
-            return Task.FromResult(tempDeviationSum / etalon.Count);
-        }        
+            return Task.FromResult(tempDeviationSum / _threeLettersFrequencies.Count);
+        }
 
         class IndividualsComparer : IEqualityComparer<Individual>
         {
