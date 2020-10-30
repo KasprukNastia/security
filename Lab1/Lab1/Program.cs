@@ -37,25 +37,28 @@ namespace Lab1
             var basePath = $"{Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent}\\Task3\\Data";
 
             string allText = File.ReadAllText($"{basePath}\\bigrams_percentages.json");
-            Dictionary<string, float> bigrams = JsonConvert.DeserializeObject<Dictionary<string, float>>(allText);
+            var bigrams = JsonConvert.DeserializeObject<Dictionary<string, float>>(allText)
+                .Select(t => new EtalonMember(t.Key, t.Value)).ToList();
 
             allText = File.ReadAllText($"{basePath}\\trigrams_percentages.json");
-            Dictionary<string, float> trigrams = JsonConvert.DeserializeObject<Dictionary<string, float>>(allText);
-            List<EtalonMember> trigramsList = trigrams.Select(t => new EtalonMember { TriGram = t.Key, Frequency = t.Value }).ToList();
+            var trigrams = JsonConvert.DeserializeObject<Dictionary<string, float>>(allText)
+                .Select(t => new EtalonMember(t.Key, t.Value)).ToList();
 
             string thirdTaskEncryptedMessage = "EFFPQLEKVTVPCPYFLMVHQLUEWCNVWFYGHYTCETHQEKLPVMSAKSPVPAPVYWMVHQLUSPQLYWLASLFVWPQLMVHQLUPLRPSQLULQESPBLWPCSVRVWFLHLWFLWPUEWFYOTCMQYSLWOYWYETHQEKLPVMSAKSPVPAPVYWHEPPLUWSGYULEMQTLPPLUGUYOLWDTVSQETHQEKLPVPVSMTLEUPQEPCYAMEWWYTYWDLUULTCYWPQLSEOLSVOHTLUYAPVWLYGDALSSVWDPQLNLCKCLRQEASPVILSLEUMQBQVMQCYAHUYKEKTCASLFPYFLMVHQLUPQLHULIVYASHEUEDUEHQBVTTPQLVWFLRYGMYVWMVFLWMLSPVTTBYUNESESADDLSPVYWCYAMEWPUCPYFVIVFLPQLOLSSEDLVWHEUPSKCPQLWAOKLUYGMQEUEMPLUSVWENLCEWFEHHTCGULXALWMCEWETCSVSPYLEMQYGPQLOMEWCYAGVWFEBECPYASLQVDQLUYUFLUGULXALWMCSPEPVSPVMSBVPQPQVSPCHLYGMVHQLUPQLWLRPOEDVMETBYUFBVTTPENLPYPQLWLRPTEKLWZYCKVPTCSTESQPQULLGYAUMEHVPETFWMEHVPETBZMEHVPETB";
-            //string thirdTaskKey = "cfgijlnprstuxzabdehkmoqvwy";
+            //string thirdTaskKey = "EKMFLGDQVZNTOWYHXUSPAIBRCJ".ToLower();
             //Console.WriteLine(new Substitution(new string(SingleByteXorAttacker.OneLetterEnglishFrequency.Select(c => c.Key).ToArray()), thirdTaskKey).Decrypt(thirdTaskEncryptedMessage.ToLower()));
 
             var substitutionAttacker = new SubstitutionAttacker(
                 encryptedText: thirdTaskEncryptedMessage,
-                populationSize: 100,
-                iterationsCount: 500,
+                minPopulationSize: 40,
+                maxPopulationSize: 100,
+                iterationsCount: 1000,
                 mutationPercentage: 0.02F,
-                bestPercentage: 50,
-                toNextGenerationPercentage: 30,
+                bestPercentage: 30,
                 twoLettersFrequencies: bigrams,
-                threeLettersFrequencies: trigramsList);
+                threeLettersFrequencies: trigrams,
+                twoLettersFittingQuotientCoef: 0.5F,
+                threeLettersFittingQuotientCoef: 1.5F);
 
             List<Individual> keys = substitutionAttacker.Evaluate().Result;
             keys.Take(10).Select(k => k.Key).ToList().ForEach(Console.WriteLine);

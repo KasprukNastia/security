@@ -1,53 +1,53 @@
 ﻿using Lab1.Task1;
 using System;
-using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Lab1.Task3
 {
     public class SubstitutionAttacker
     {
-        private readonly Dictionary<string, float> _twoLettersFrequencies;
+        private readonly List<EtalonMember> _twoLettersFrequencies;
         private readonly List<EtalonMember> _threeLettersFrequencies;
-        private readonly SingleByteXorAttacker _singleByteXorAttacker;
 
         public string Alphabet { get; }
         public string EncryptedText { get; }
-        public int PopulationSize { get; }
+        public int MinPopulationSize { get; }
+        public int MaxPopulationSize { get; }
         public int IterationsCount { get; }
-        public float MutationPercentage { get; }
+        public double MutationPercentage { get; }
         public int BestPercentage { get; }
-        public int BestCount => PopulationSize * BestPercentage / 100;
-        public int ToNextGenerationPercentage { get; }       
-        public int ToNextGenerationCount => PopulationSize * ToNextGenerationPercentage / 100;
-        public float OneLetterFittingQuotientCoef { get; }
-        public float TwoLettersFittingQuotientCoef { get; }
-        public float ThreeLettersFittingQuotientCoef { get; }
+        public double TwoLettersFittingQuotientCoef { get; }
+        public double ThreeLettersFittingQuotientCoef { get; }
 
         public SubstitutionAttacker(
             string encryptedText,
-            int populationSize,
+            int minPopulationSize,
+            int maxPopulationSize,
             int iterationsCount,
-            float mutationPercentage,
+            double mutationPercentage,
             int bestPercentage,
-            int toNextGenerationPercentage,
-            Dictionary<string, float> twoLettersFrequencies,
+            List<EtalonMember> twoLettersFrequencies,
             List<EtalonMember> threeLettersFrequencies,
-            float oneLetterFittingQuotientCoef = 1,
-            float twoLettersFittingQuotientCoef = 1,
-            float threeLettersFittingQuotientCoef = 1)
+            double twoLettersFittingQuotientCoef = 1,
+            double threeLettersFittingQuotientCoef = 1)
         {
             EncryptedText = encryptedText ?? throw new ArgumentNullException(nameof(encryptedText));
             EncryptedText = EncryptedText.ToLower();
 
-            if (populationSize <= 0)
-                throw new ArgumentException($"{nameof(populationSize)} must be  greather than 0");
-            PopulationSize = populationSize;
+            if (minPopulationSize <= 0)
+                throw new ArgumentException($"{nameof(minPopulationSize)} must be  greather than 0");
+            MinPopulationSize = minPopulationSize;
+
+            if (maxPopulationSize <= 0)
+                throw new ArgumentException($"{nameof(maxPopulationSize)} must be  greather than 0");
+            MaxPopulationSize = maxPopulationSize;
+
+            if(minPopulationSize > maxPopulationSize)
+                throw new ArgumentException($"{nameof(maxPopulationSize)} must be equal to or greather than {nameof(minPopulationSize)}");
 
             if (iterationsCount <= 0)
                 throw new ArgumentException($"{nameof(iterationsCount)} must be  greather than 0");
@@ -61,17 +61,11 @@ namespace Lab1.Task3
                 throw new ArgumentException($"{nameof(bestPercentage)} must be value from 0 to 100");
             BestPercentage = bestPercentage;
 
-            if (toNextGenerationPercentage <= 0 || toNextGenerationPercentage > 100)
-                throw new ArgumentException($"{nameof(toNextGenerationPercentage)} must be value from 0 to 100");
-            ToNextGenerationPercentage = toNextGenerationPercentage;
-            
             _twoLettersFrequencies = twoLettersFrequencies ?? throw new ArgumentNullException(nameof(twoLettersFrequencies));
             _threeLettersFrequencies = threeLettersFrequencies ?? throw new ArgumentNullException(nameof(threeLettersFrequencies));
 
-            _singleByteXorAttacker = new SingleByteXorAttacker();
             Alphabet = new string(SingleByteXorAttacker.OneLetterEnglishFrequency.Select(c => c.Key).ToArray());
 
-            OneLetterFittingQuotientCoef = oneLetterFittingQuotientCoef;
             TwoLettersFittingQuotientCoef = twoLettersFittingQuotientCoef;
             ThreeLettersFittingQuotientCoef = threeLettersFittingQuotientCoef;
         }
@@ -79,13 +73,13 @@ namespace Lab1.Task3
         public async Task<List<Individual>> Evaluate()
         {
             Dictionary<string, Task<Individual>> population =
-                GeneratePoputation(PopulationSize).ToDictionary(i => i.Key, i => CalcFitness(i));
+                GeneratePoputation(MaxPopulationSize).ToDictionary(i => i.Key, i => CalcFitness(i));
             await Task.WhenAll(population.Values);
 
             var random = new Random();
             IOrderedEnumerable<KeyValuePair<string, Task<Individual>>> orderedPopulation;
             IEnumerable<KeyValuePair<string, Task<Individual>>> best;
-            IEnumerable<KeyValuePair<string, Task<Individual>>> toNextGeneration;
+            int currentBestCount;
             int totalGenerated = 0;
             int mutatedCount = 0;
             bool needsMutation = false;
@@ -93,15 +87,11 @@ namespace Lab1.Task3
             for (int i = 0; i < IterationsCount; i++)
             {
                 Console.WriteLine($"Iteration: {i}");
-
-                sw.Start();
                 orderedPopulation = population.OrderByDescending(i => i.Value.Result.Fitness);
-                sw.Stop();
-                Console.WriteLine($"Ordering time: {sw.ElapsedMilliseconds} ms");
-                sw.Reset();
+                Console.WriteLine($"Best key: {population.First().Key}");
 
-                best = orderedPopulation.Take(BestCount);
-                toNextGeneration = orderedPopulation.Skip(BestCount).Take(ToNextGenerationCount);
+                currentBestCount = orderedPopulation.Count() * BestPercentage / 100;                
+                best = orderedPopulation.Take(currentBestCount);
 
                 population = new Dictionary<string, Task<Individual>>(best);
                 totalGenerated = population.Count;
@@ -109,15 +99,15 @@ namespace Lab1.Task3
                 needsMutation = false;
 
                 sw.Start();
-                while (totalGenerated < PopulationSize)
+                while (totalGenerated < MaxPopulationSize || population.Count < MinPopulationSize)
                 {
-                    needsMutation = mutatedCount * 100 / (float)(totalGenerated - population.Count) < MutationPercentage;
+                    needsMutation = mutatedCount * 100 / (double)(totalGenerated - population.Count) < MutationPercentage;
                     if (needsMutation)
                         mutatedCount += 2;
-                    Crossover(best.ElementAt(random.Next(0, BestCount - 1)).Value.Result,
-                        toNextGeneration.ElementAt(random.Next(0, ToNextGenerationCount - 1)).Value.Result,
+                    Crossover(best.ElementAt(random.Next(0, currentBestCount - 1)).Value.Result,
+                        best.ElementAt(random.Next(0, currentBestCount - 1)).Value.Result,
                         needsMutation)
-                        .ForEach(i => 
+                        .ForEach(i =>
                         {
                             population.TryAdd(i.Key, CalcFitness(i));
                         });
@@ -126,6 +116,7 @@ namespace Lab1.Task3
                 await Task.WhenAll(population.Values);
                 sw.Stop();
                 Console.WriteLine($"Population generation time: {sw.ElapsedMilliseconds} ms");
+                
                 sw.Reset();
                 Console.WriteLine();
             }
@@ -138,7 +129,7 @@ namespace Lab1.Task3
             var random = new Random();
             var population = new HashSet<Individual>(size, new IndividualsComparer());
             Individual individual;
-            while(population.Count != size)
+            while (population.Count != size)
             {
                 individual = new Individual(new string(Alphabet.ToCharArray().OrderBy(s => (random.Next(2) % 2) == 0).ToArray()), Alphabet.Length);
                 population.Add(individual);
@@ -147,17 +138,19 @@ namespace Lab1.Task3
             return population;
         }
 
-        private Task<Individual> CalcFitness(Individual individual)
+        private async Task<Individual> CalcFitness(Individual individual)
         {
             var substitution = new Substitution(Alphabet, individual.Key);
             string decryptedMessage = substitution.Decrypt(EncryptedText);
 
-            return CalcThreeLettersFittingQuotient(decryptedMessage)
-                .ContinueWith(fitness => 
-                {
-                    individual.Fitness = fitness.Result;
-                    return individual;
-                });
+            IEnumerable<double> results = await Task.WhenAll(
+                CalcFittingQuotient(decryptedMessage, _twoLettersFrequencies),
+                CalcFittingQuotient(decryptedMessage, _threeLettersFrequencies));
+
+            individual.Fitness = TwoLettersFittingQuotientCoef * results.ElementAt(0) +
+                ThreeLettersFittingQuotientCoef * results.ElementAt(1);
+
+            return individual;
         }
 
         private List<Individual> Crossover(Individual first, Individual second, bool needsMutation = false)
@@ -196,64 +189,27 @@ namespace Lab1.Task3
             }
         }
 
-        //private Task<float> CalcTwoLettersFittingQuotient(string decryptedMessage)
-        //{
-        //    List<string> bigrams = decryptedMessage.Select(
-        //        (letter, index) => index != decryptedMessage.Length - 1 ? $"{letter}{decryptedMessage[index + 1]}" : letter.ToString())
-        //        .Take(decryptedMessage.Length - 1)
-        //        .ToList();
-
-        //    return CalcFittingQuotient(bigrams, _twoLettersFrequencies);
-        //}
-
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //private Task<float> CalcThreeLettersFittingQuotient(string decryptedMessage)
-        //{
-        //    List<string> trigrams = decryptedMessage.Select((letter, index) => 
-        //        index != decryptedMessage.Length - 2 ? $"{letter}{decryptedMessage[index + 1]}{decryptedMessage[index + 2]}" : letter.ToString())
-        //        .Take(decryptedMessage.Length - 2)
-        //        .ToList();
-
-        //    return CalcFittingQuotient(trigrams, _threeLettersFrequencies);
-        //}
-
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //private Task<float> CalcFittingQuotient(List<string> splittedMessage, Dictionary<string, float> etalon)
-        //{
-        //    float currentFrequency;
-        //    float tempDeviationSum = 0;
-        //    foreach (var frequency in etalon.Select(e => (e.Key, e.Value)).ToList())
-        //    {
-        //        currentFrequency =
-        //            splittedMessage.Count(val => val.Equals(frequency.Key, StringComparison.Ordinal)) * 100 /
-        //            (float)splittedMessage.Count;
-
-        //        tempDeviationSum += Math.Abs(frequency.Value - currentFrequency);
-        //    }
-
-        //    return Task.FromResult(tempDeviationSum / etalon.Count);
-        //}
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private Task<float> CalcThreeLettersFittingQuotient(string decryptedMessage)
+        private Task<double> CalcFittingQuotient(string decryptedMessage, List<EtalonMember> etalons)
         {
-            int counter = 0, index = -3;
-            float currentFrequency;
-            float tempDeviationSum = 0;
-            foreach (var frequency in _threeLettersFrequencies)
+            int numberOfMatches = 0,
+                index = -1,
+                etalonMemberKeyLength = etalons.First().Key.Length;
+            double currentFrequency;
+            double tempDeviationSum = 0;
+            foreach (var frequency in etalons)
             {
-                while(index >= 0 && index < decryptedMessage.Length - 2)
+                do
                 {
-                    index = decryptedMessage.IndexOf(frequency.TriGram, index + 1, StringComparison.Ordinal);
-                    if (index >= 0)
-                        counter++;
-                }               
+                    index = decryptedMessage.IndexOf(frequency.Key, index + 1, StringComparison.Ordinal);
+                    numberOfMatches++;
+                } while (index >= 0 && index < decryptedMessage.Length - etalonMemberKeyLength - 1);
+                numberOfMatches--;
 
-                currentFrequency = counter * 100 / decryptedMessage.Length - 2;
+                currentFrequency = numberOfMatches * 100 / decryptedMessage.Length - etalonMemberKeyLength - 1;
                 tempDeviationSum += Math.Abs(frequency.Frequency - currentFrequency);
             }
 
-            return Task.FromResult(tempDeviationSum / _threeLettersFrequencies.Count);
+            return Task.FromResult(tempDeviationSum / etalons.Count);
         }
 
         class IndividualsComparer : IEqualityComparer<Individual>
