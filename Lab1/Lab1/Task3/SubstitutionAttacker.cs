@@ -104,8 +104,8 @@ namespace Lab1.Task3
                     needsMutation = mutatedCount * 100 / (double)(totalGenerated - population.Count) < MutationPercentage;
                     if (needsMutation)
                         mutatedCount += 2;
-                    Crossover(best.ElementAt(random.Next(0, currentBestCount - 1)).Value.Result,
-                        best.ElementAt(random.Next(0, currentBestCount - 1)).Value.Result,
+                    Crossover(best.ElementAt(random.Next(0, currentBestCount)).Value.Result,
+                        best.ElementAt(random.Next(0, currentBestCount)).Value.Result,
                         needsMutation)
                         .ForEach(i =>
                         {
@@ -155,19 +155,48 @@ namespace Lab1.Task3
 
         private List<Individual> Crossover(Individual first, Individual second, bool needsMutation = false)
         {
+            char[] firstChildKey = new char[Alphabet.Length];
+            char[] secondChildKey = new char[Alphabet.Length];
+
+            LinkedList<char> firstKeyCopy = new LinkedList<char>(first.Key);
+            LinkedList<char> secondKeyCopy = new LinkedList<char>(second.Key);
             var random = new Random();
-            int randomPos = random.Next(1, Alphabet.Length - 1);
 
-            IEnumerable<char> keyPart = first.Key.Take(randomPos);
-            char[] firstChildKey = keyPart.Concat(second.Key.Where(l => !keyPart.Contains(l))).ToArray();
+            List<(int index, int indicator)> positions = Enumerable.Range(0, Alphabet.Length)
+                .Select(i => (i, random.Next(0, 2))).ToList();
+            foreach((int index, int indicator) in positions)
+            {
+                if (indicator == 0)
+                {
+                    firstChildKey[index] = first.Key[index];
+                    secondKeyCopy.Remove(first.Key[index]);
+                }
+                else
+                {
+                    secondChildKey[index] = second.Key[index];
+                    firstKeyCopy.Remove(second.Key[index]);
+                }
+            }
 
-            keyPart = second.Key.Take(randomPos);
-            char[] secondChildKey = keyPart.Concat(first.Key.Where(l => !keyPart.Contains(l))).ToArray();
+            foreach ((int index, int indicator) in positions)
+            {
+                if (indicator == 1)
+                {
+                    firstChildKey[index] = secondKeyCopy.First.Value;
+                    secondKeyCopy.RemoveFirst();
+                }
+                else
+                {
+                    secondChildKey[index] = firstKeyCopy.First.Value;
+                    firstKeyCopy.RemoveFirst();
+                }
+            }
 
             if (needsMutation)
             {
+                int randomPos = random.Next(0, Alphabet.Length);
                 int firstLetterIndex = random.Next(0, randomPos);
-                int secondLetterIndex = random.Next(randomPos, Alphabet.Length - 1);
+                int secondLetterIndex = random.Next(randomPos, Alphabet.Length);
 
                 Swap(firstChildKey, firstLetterIndex, secondLetterIndex);
                 Swap(secondChildKey, firstLetterIndex, secondLetterIndex);
@@ -205,7 +234,7 @@ namespace Lab1.Task3
                 } while (index >= 0 && index < decryptedMessage.Length - etalonMemberKeyLength - 1);
                 numberOfMatches--;
 
-                currentFrequency = numberOfMatches * 100 / decryptedMessage.Length - etalonMemberKeyLength - 1;
+                currentFrequency = numberOfMatches * 100 / (double)(decryptedMessage.Length - etalonMemberKeyLength - 1);
                 tempDeviationSum += Math.Abs(frequency.Frequency - currentFrequency);
             }
 
