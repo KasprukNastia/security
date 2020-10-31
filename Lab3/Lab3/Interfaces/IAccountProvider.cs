@@ -5,6 +5,6 @@ namespace Lab3.Interfaces
 {
     public interface IAccountProvider
     {
-        Task<Account> GetAccount();
+        Task<Account> GetAccountAcync();
     }
 }
