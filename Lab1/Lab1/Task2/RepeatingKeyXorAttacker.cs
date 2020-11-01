@@ -51,7 +51,7 @@ namespace Lab1.Task2
             return resultKeys.Select(key => Encoding.UTF8.GetString(key)).ToList();
         }
 
-        private int GetKeyLength(string encryptedMessage)
+        public int GetKeyLength(string encryptedMessage)
         {
             Dictionary<int, float> coincidenceIndices =
                 new Dictionary<int, float>(encryptedMessage.Length - 1);
