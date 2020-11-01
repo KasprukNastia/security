@@ -52,24 +52,27 @@ namespace Lab1
             var trigrams = JsonConvert.DeserializeObject<Dictionary<string, float>>(allText)
                 .Select(t => new EtalonMember(t.Key, t.Value)).ToList();
 
-            string thirdTaskEncryptedMessage = "EFFPQLEKVTVPCPYFLMVHQLUEWCNVWFYGHYTCETHQEKLPVMSAKSPVPAPVYWMVHQLUSPQLYWLASLFVWPQLMVHQLUPLRPSQLULQESPBLWPCSVRVWFLHLWFLWPUEWFYOTCMQYSLWOYWYETHQEKLPVMSAKSPVPAPVYWHEPPLUWSGYULEMQTLPPLUGUYOLWDTVSQETHQEKLPVPVSMTLEUPQEPCYAMEWWYTYWDLUULTCYWPQLSEOLSVOHTLUYAPVWLYGDALSSVWDPQLNLCKCLRQEASPVILSLEUMQBQVMQCYAHUYKEKTCASLFPYFLMVHQLUPQLHULIVYASHEUEDUEHQBVTTPQLVWFLRYGMYVWMVFLWMLSPVTTBYUNESESADDLSPVYWCYAMEWPUCPYFVIVFLPQLOLSSEDLVWHEUPSKCPQLWAOKLUYGMQEUEMPLUSVWENLCEWFEHHTCGULXALWMCEWETCSVSPYLEMQYGPQLOMEWCYAGVWFEBECPYASLQVDQLUYUFLUGULXALWMCSPEPVSPVMSBVPQPQVSPCHLYGMVHQLUPQLWLRPOEDVMETBYUFBVTTPENLPYPQLWLRPTEKLWZYCKVPTCSTESQPQULLGYAUMEHVPETFWMEHVPETBZMEHVPETB";
-            //string thirdTaskKey = "EKMFLGDQVZNTOWYHXUSPAIBRCJ".ToLower();
-            //Console.WriteLine(new Substitution(new string(SingleByteXorAttacker.OneLetterEnglishFrequency.Select(c => c.Key).ToArray()), thirdTaskKey).Decrypt(thirdTaskEncryptedMessage.ToLower()));
+            string thirdTaskEncryptedMessage = "EFFPQLEKVTVPCPYFLMVHQLUEWCNVWFYGHYTCETHQEKLPVMSAKSPVPAPVYWMVHQLUSPQLYWLASLFVWPQLMVHQLUPLRPSQLULQESPBLWPCSVRVWFLHLWFLWPUEWFYOTCMQYSLWOYWYETHQEKLPVMSAKSPVPAPVYWHEPPLUWSGYULEMQTLPPLUGUYOLWDTVSQETHQEKLPVPVSMTLEUPQEPCYAMEWWYTYWDLUULTCYWPQLSEOLSVOHTLUYAPVWLYGDALSSVWDPQLNLCKCLRQEASPVILSLEUMQBQVMQCYAHUYKEKTCASLFPYFLMVHQLUPQLHULIVYASHEUEDUEHQBVTTPQLVWFLRYGMYVWMVFLWMLSPVTTBYUNESESADDLSPVYWCYAMEWPUCPYFVIVFLPQLOLSSEDLVWHEUPSKCPQLWAOKLUYGMQEUEMPLUSVWENLCEWFEHHTCGULXALWMCEWETCSVSPYLEMQYGPQLOMEWCYAGVWFEBECPYASLQVDQLUYUFLUGULXALWMCSPEPVSPVMSBVPQPQVSPCHLYGMVHQLUPQLWLRPOEDVMETBYUFBVTTPENLPYPQLWLRPTEKLWZYCKVPTCSTESQPQULLGYAUMEHVPETFWMEHVPETBZMEHVPETB";            
+            
+            string alphabet = new string(SingleByteXorAttacker.OneLetterEnglishFrequency.Select(c => c.Key).ToArray());
+            string thirdTaskKey = "EKMFLGDQVZNTOWYHXUSPAIBRCJ".ToLower();
+            var substitution = new Substitution(alphabet, new List<string> { thirdTaskKey });            
+            Console.WriteLine(substitution.Decrypt(thirdTaskEncryptedMessage.ToLower()));
 
-            var substitutionAttacker = new SubstitutionAttacker(
-                encryptedText: thirdTaskEncryptedMessage,
-                minPopulationSize: 40,
-                maxPopulationSize: 100,
-                iterationsCount: 1000,
-                mutationPercentage: 0.02F,
-                bestPercentage: 30,
-                twoLettersFrequencies: bigrams,
-                threeLettersFrequencies: trigrams,
-                twoLettersFittingQuotientCoef: 0.5F,
-                threeLettersFittingQuotientCoef: 1.5F);
+            //var substitutionAttacker = new SubstitutionAttacker(
+            //    encryptedText: thirdTaskEncryptedMessage,
+            //    minPopulationSize: 40,
+            //    maxPopulationSize: 100,
+            //    iterationsCount: 1000,
+            //    mutationPercentage: 0.02F,
+            //    bestPercentage: 30,
+            //    twoLettersFrequencies: bigrams,
+            //    threeLettersFrequencies: trigrams,
+            //    twoLettersFittingQuotientCoef: 0.5F,
+            //    threeLettersFittingQuotientCoef: 1.5F);
 
-            List<Individual> keys = substitutionAttacker.Evaluate().Result;
-            keys.Take(10).Select(k => k.Key).ToList().ForEach(Console.WriteLine);
+            //List<Individual> keys = substitutionAttacker.Evaluate().Result;
+            //keys.Take(10).Select(k => k.Key).ToList().ForEach(Console.WriteLine);
         }
     }
 }

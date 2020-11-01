@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Lab1.Task3
@@ -6,27 +7,31 @@ namespace Lab1.Task3
     public class Substitution
     {
         public string Alphabet { get; }
-        public string Key { get; }
+        public List<string> Keys { get; }
 
-        public Substitution(string alphabet, string key)
+        public Substitution(string alphabet, List<string> keys)
         {
             Alphabet = alphabet ?? throw new ArgumentNullException(nameof(alphabet));
-            Key = key ?? throw new ArgumentNullException(nameof(key));
+            Keys = keys ?? throw new ArgumentNullException(nameof(keys));
 
-            if (Alphabet.Length != key.Length)
-                throw new ArgumentException($"Alphabet length ({Alphabet.Length}) must be equal to the key length ({Key.Length})");
+            if(keys.Count == 0)
+                throw new ArgumentException("Keys collection must have at least one value");
+            if (keys.Any(k => k.Length != Alphabet.Length))
+                throw new ArgumentException($"Alphabet length ({Alphabet.Length}) must be equal to the key length");
         }
 
         public string Encrypt(string message) =>
-            new string(message.Select(l => {
-                int index = Alphabet.IndexOf(l);
-                return index == -1 ? l : Key.ElementAt(index);
+            new string(message.Select((letter, letterIndex) => {               
+                string key = Keys.Count == 1 ? Keys.First() : Keys.ElementAt(letterIndex % Keys.Count);
+                int alphabetIndex = Alphabet.IndexOf(letter);
+                return alphabetIndex == -1 ? letter : key.ElementAt(alphabetIndex);
             }).ToArray());
 
         public string Decrypt(string message) =>
-            new string(message.Select(l => {
-                int index = Key.IndexOf(l);
-                return index == -1 ? l : Alphabet.ElementAt(index);
+            new string(message.Select((letter, letterIndex) => {
+                string key = Keys.Count == 1 ? Keys.First() : Keys.ElementAt(letterIndex % Keys.Count);
+                int index = key.IndexOf(letter);
+                return index == -1 ? letter : Alphabet.ElementAt(index);
             }).ToArray());
     }
 }

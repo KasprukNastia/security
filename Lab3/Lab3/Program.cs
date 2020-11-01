@@ -8,8 +8,12 @@ namespace Lab3
 {
     class Program
     {
+        public static object RandomMT { get; private set; }
+
         static void Main(string[] args)
         {
+            Console.WriteLine(3 % 2);
+
             HttpClient httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
             string baseAddress = "http://95.217.177.249/casino";
             ConnectionSettings connectionSettings = new ConnectionSettings(
