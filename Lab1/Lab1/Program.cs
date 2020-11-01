@@ -69,7 +69,7 @@ namespace Lab1
                 threeLettersFittingQuotientCoef: 1.5F);
 
             List<Individual> keys = substitutionAttacker.Evaluate().Result;
-            keys.Take(10).Select(k => k.Key).ToList().ForEach(Console.WriteLine);
+            keys.OrderByDescending(k => k.Fitness).Take(10).Select(k => k.Key).ToList().ForEach(Console.WriteLine);
         }
     }
 }
