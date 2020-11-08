@@ -12,8 +12,17 @@ namespace Lab3
 
         static void Main(string[] args)
         {
-            Console.WriteLine(3 % 2);
+            var mt = new MT19937();
+            mt.init_genrand(1131464071);
 
+            for(int i = 0; i < 100; i++)
+            {
+                Console.WriteLine(mt.genrand_int32());
+            }
+        }
+
+        public static void Run()
+        {
             HttpClient httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
             string baseAddress = "http://95.217.177.249/casino";
             ConnectionSettings connectionSettings = new ConnectionSettings(
@@ -27,22 +36,22 @@ namespace Lab3
                 $"{baseFilePath}\\my_account_data.json",
                 httpClient,
                 connectionSettings);
-            string currentPlayStateFilePath = $"{baseFilePath}\\current_play_state.json";
+            string currentLcgPlayStateFilePath = $"{baseFilePath}\\current_lcg_play_state.json";
             ILcgParamsProvider lcgParamsProvider = new LcgParamsProvider(
                 $"{baseFilePath}\\lcg_params.json",
                 httpClient,
                 connectionSettings,
                 accountProvider,
-                currentPlayStateFilePath: currentPlayStateFilePath);
-            LcgPlayer lcgPlayer = new LcgPlayer(
+                currentPlayStateFilePath: currentLcgPlayStateFilePath);
+            Player lcgPlayer = new Player(
                 accountProvider,
                 lcgParamsProvider,
-                currentPlayStateFilePath,
+                currentLcgPlayStateFilePath,
                 httpClient,
                 connectionSettings,
                 betPersentage: 1);
 
-            lcgPlayer.Play().Wait();
+            lcgPlayer.PlayLcg().Wait();
         }
     }
 }

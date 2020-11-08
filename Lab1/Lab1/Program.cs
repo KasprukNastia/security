@@ -93,7 +93,8 @@ namespace Lab1
             var trigrams = JsonConvert.DeserializeObject<Dictionary<string, float>>(allText)
                 .Select(t => new EtalonMember(t.Key, t.Value)).ToList();
 
-            int individualSetMembersCount = new RepeatingKeyXorAttacker().GetKeyLength(fourthTaskEncryptedMessage);
+            //int individualSetMembersCount = new RepeatingKeyXorAttacker().GetKeyLength(fourthTaskEncryptedMessage);
+            int individualSetMembersCount = 4;
 
             var substitutionAttacker = new SubstitutionAttacker(
                 encryptedText: fourthTaskEncryptedMessage,
