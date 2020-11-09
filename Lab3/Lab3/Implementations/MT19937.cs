@@ -42,6 +42,10 @@ namespace Lab3.Implementations
             }
         }
 
+        public void init_genrand(ulong[] states)
+        {
+            mt = states;
+        }
 
         // initialize by an array with array-length
         // init_key is the array for initializing keys
@@ -138,10 +142,31 @@ namespace Lab3.Implementations
             y = mt[mti++];
 
             /* Tempering */
+            y = tempering(y);
+
+            return y;
+        }
+
+        public ulong tempering(ulong y)
+        {
             y ^= (y >> 11);
             y ^= (y << 7) & 0x9d2c5680UL;
             y ^= (y << 15) & 0xefc60000UL;
             y ^= (y >> 18);
+
+            return y;
+        }
+
+        public ulong untempering(ulong y)
+        {
+            y ^= (y >> 18);
+            y ^= (y << 15) & 0xefc60000UL;
+            y ^=
+                ((y << 7) & 0x9d2c5680UL) ^
+                ((y << 14) & 0x94284000UL) ^
+                ((y << 21) & 0x14200000UL) ^
+                ((y << 28) & 0x10000000UL);
+            y ^= (y >> 11) ^ (y >> 22);
 
             return y;
         }

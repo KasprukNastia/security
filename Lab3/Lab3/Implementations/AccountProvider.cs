@@ -19,14 +19,14 @@ namespace Lab3.Implementations
 
         public AccountProvider(
             int playerId,
-            string accountFilePath,
             HttpClient httpClient,
-            ConnectionSettings connectionSettings)
+            ConnectionSettings connectionSettings,
+            string accountFilePath = null)
         {
             _playerId = playerId;
-            _accountFilePath = accountFilePath ?? throw new ArgumentNullException(nameof(accountFilePath));
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _connectionSettings = connectionSettings ?? throw new ArgumentNullException(nameof(connectionSettings));
+            _accountFilePath = accountFilePath;
         }
 
         public async Task<Account> GetAccountAcync()
@@ -38,7 +38,7 @@ namespace Lab3.Implementations
             // Reading from file
             string accountJsonData = File.ReadAllText(_accountFilePath);
             _account = JsonConvert.DeserializeObject<Account>(accountJsonData);
-            if (_account != null && _account.Id.HasValue)
+            if (_account != null && _account.Id.HasValue && _account.Id.Value == _playerId)
                 return _account;
 
             // Getting at first time
@@ -47,12 +47,13 @@ namespace Lab3.Implementations
             if (!response.IsSuccessStatusCode)
                 return null;
             string responseStr = await response.Content.ReadAsStringAsync();
-
-            _account = JsonConvert.DeserializeObject<Account>(responseStr);
-            if (_account != null && _account.Id.HasValue)
-                File.WriteAllText(_accountFilePath, responseStr);
-            else
+            _account = JsonConvert.DeserializeObject<Account>(responseStr);           
+            
+            if (_account == null || !_account.Id.HasValue)
                 throw new InvalidOperationException($"Unknown data was reseived from the external source: {responseStr}");
+
+            if(!string.IsNullOrWhiteSpace(_accountFilePath))
+                File.WriteAllText(_accountFilePath, responseStr);
 
             return _account;
         }

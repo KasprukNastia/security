@@ -8,20 +8,14 @@ namespace Lab3
 {
     class Program
     {
-        public static object RandomMT { get; private set; }
+        public static int PlayerId = 1717;
 
         static void Main(string[] args)
         {
-            var mt = new MT19937();
-            mt.init_genrand(1131464071);
-
-            for(int i = 0; i < 100; i++)
-            {
-                Console.WriteLine(mt.genrand_int32());
-            }
+            RunMt();
         }
 
-        public static void Run()
+        public static void RunLcg()
         {
             HttpClient httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
             string baseAddress = "http://95.217.177.249/casino";
@@ -31,27 +25,86 @@ namespace Lab3
                 playAddress: $"{baseAddress}/play");
 
             string baseFilePath = $"{Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent}\\Data";
+            string accountFilePath = $"{baseFilePath}\\my_account_data.json";            
             IAccountProvider accountProvider = new AccountProvider(
-                playerId: 1701,
-                $"{baseFilePath}\\my_account_data.json",
+                playerId: PlayerId,
                 httpClient,
-                connectionSettings);
-            string currentLcgPlayStateFilePath = $"{baseFilePath}\\current_lcg_play_state.json";
-            ILcgParamsProvider lcgParamsProvider = new LcgParamsProvider(
-                $"{baseFilePath}\\lcg_params.json",
+                connectionSettings,
+                accountFilePath);
+            string playStateFilePath = $"{baseFilePath}\\current_lcg_play_state.json";
+            ILcgParamsProvider lcgParamsProvider = new LcgParamsProvider(              
                 httpClient,
                 connectionSettings,
                 accountProvider,
-                currentPlayStateFilePath: currentLcgPlayStateFilePath);
-            Player lcgPlayer = new Player(
-                accountProvider,
+                lcgParamsFilePath: $"{baseFilePath}\\lcg_params.json",
+                currentPlayStateFilePath: playStateFilePath,
+                accountFilePath: accountFilePath);
+            Player lcgPlayer = new LcgPlayer(
                 lcgParamsProvider,
-                currentLcgPlayStateFilePath,
+                accountProvider,
                 httpClient,
                 connectionSettings,
+                playStateFilePath: playStateFilePath,
+                accountFilePath: accountFilePath,
                 betPersentage: 1);
 
-            lcgPlayer.PlayLcg().Wait();
+            lcgPlayer.Play().Wait();
+        }
+
+        public static void RunMt()
+        {
+            HttpClient httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+            string baseAddress = "http://95.217.177.249/casino";
+            ConnectionSettings connectionSettings = new ConnectionSettings(
+                baseAddress: baseAddress,
+                createAccAddress: $"{baseAddress}/createacc",
+                playAddress: $"{baseAddress}/play");
+
+            string baseFilePath = $"{Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent}\\Data";
+            string accountFilePath = $"{baseFilePath}\\my_account_data.json";
+            IAccountProvider accountProvider = new AccountProvider(
+                playerId: PlayerId,
+                httpClient,
+                connectionSettings,
+                accountFilePath);
+            string playStateFilePath = $"{baseFilePath}\\current_mt_play_state.json";
+            Player mtPlayer = new MtPlayer(
+                accountProvider,
+                httpClient,
+                connectionSettings,
+                playStateFilePath: playStateFilePath,
+                accountFilePath: accountFilePath,
+                betPersentage: 1);
+
+            mtPlayer.Play().Wait();
+        }
+
+        public static void RunBetterMt()
+        {
+            HttpClient httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+            string baseAddress = "http://95.217.177.249/casino";
+            ConnectionSettings connectionSettings = new ConnectionSettings(
+                baseAddress: baseAddress,
+                createAccAddress: $"{baseAddress}/createacc",
+                playAddress: $"{baseAddress}/play");
+
+            string baseFilePath = $"{Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent}\\Data";
+            string accountFilePath = $"{baseFilePath}\\my_account_data.json";
+            IAccountProvider accountProvider = new AccountProvider(
+                playerId: PlayerId,
+                httpClient,
+                connectionSettings,
+                accountFilePath);
+            string playStateFilePath = $"{baseFilePath}\\current_better_mt_play_state.json";
+            Player betterMtPlayer = new BetterMtPlayer(
+                accountProvider,
+                httpClient,
+                connectionSettings,
+                playStateFilePath: playStateFilePath,
+                accountFilePath: accountFilePath,
+                betPersentage: 1);
+
+            betterMtPlayer.Play().Wait();
         }
     }
 }
