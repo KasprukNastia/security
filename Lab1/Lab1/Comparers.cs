@@ -27,13 +27,11 @@ namespace Lab1
             if (x.Count != y.Count)
                 return false;
 
+            bool allTheSame = true;
             for (int index = 0; index < x.Count; index++)
-            {
-                if (x.ElementAt(index).Key.Equals(y.ElementAt(index).Key, StringComparison.OrdinalIgnoreCase))
-                    return true;
-            }
+                allTheSame &= x.ElementAt(index).Key.Equals(y.ElementAt(index).Key, StringComparison.OrdinalIgnoreCase);
 
-            return false;
+            return allTheSame;
         }
 
         public int GetHashCode([DisallowNull] IndividualSet obj)

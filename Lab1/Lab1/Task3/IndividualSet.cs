@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Lab1.Task3
 {
@@ -11,6 +12,14 @@ namespace Lab1.Task3
         public IndividualSet(int membersCount) : base(membersCount)
         {
             MembersCount = membersCount;
+        }
+
+        public void Add(Individual item)
+        {
+            if (Count == MembersCount)
+                throw new ArgumentOutOfRangeException("Individual set is full");
+
+            base.Add(item);
         }
     }
 }
