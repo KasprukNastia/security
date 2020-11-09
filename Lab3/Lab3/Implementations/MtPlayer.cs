@@ -38,8 +38,7 @@ namespace Lab3.Implementations
                 mt = new MT19937();
                 mt.init_genrand((ulong)seed);
                 counter++;
-                for(int i = 0; i < counter; i++)
-                    nextNum = (long)mt.genrand_int32();
+                nextNum = (long)mt.genrand_int32();
             } while (_playState.RealNumber != nextNum);
 
             while (_playState.Account.Money < 1000000)

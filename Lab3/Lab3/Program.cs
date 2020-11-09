@@ -8,7 +8,7 @@ namespace Lab3
 {
     class Program
     {
-        public static int PlayerId = 1717;
+        public static int PlayerId = 1718;
 
         static void Main(string[] args)
         {
