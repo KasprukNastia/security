@@ -16,13 +16,67 @@ namespace Lab4
         private readonly List<string> _top100Passwords;
         private readonly List<string> _top100000Passwords;
 
+        public int Top100Persentage { get; }
+        public int Top100000Persentage { get; }
+        public int RandomPasswordsPersentage { get; }
+        public int OtherPersentage { get; }
+
         public PasswordsGenerator(List<string> top100Passwords, 
-            List<string> top100000Passwords)
+            List<string> top100000Passwords,
+            int top100Persentage = 5,
+            int top100000Persentage = 70,
+            int randomPasswordsPersentage = 5)
         {
             _top100Passwords = top100Passwords ?? throw new ArgumentNullException(nameof(top100Passwords));
             _top100000Passwords = top100000Passwords ?? throw new ArgumentNullException(nameof(top100000Passwords));
+
+            if (top100Persentage <= 0 || top100Persentage > 100)
+                throw new ArgumentException($"{nameof(top100Persentage)} must be value from 0 to 100");
+            Top100Persentage = top100Persentage;
+
+            if (top100000Persentage <= 0 || top100000Persentage > 100)
+                throw new ArgumentException($"{nameof(top100000Persentage)} must be value from 0 to 100");
+            Top100000Persentage = top100000Persentage;
+
+            if (randomPasswordsPersentage <= 0 || randomPasswordsPersentage > 100)
+                throw new ArgumentException($"{nameof(randomPasswordsPersentage)} must be value from 0 to 100");
+            RandomPasswordsPersentage = randomPasswordsPersentage;
+
+            int persentagesSum = Top100Persentage + Top100000Persentage + RandomPasswordsPersentage;
+            if (persentagesSum > 100)
+                throw new ArgumentException($"Sum of {nameof(top100Persentage)} {nameof(top100000Persentage)} and {nameof(randomPasswordsPersentage)} must be value from 0 to 100");
+
+            OtherPersentage = 100 - persentagesSum;
         }
 
+        public List<string> GeneratePasswords(int passwordsCount)
+        {
+            List<string> result = new List<string>(passwordsCount);
+
+            var random = new Random();
+            int top100Count = passwordsCount * Top100Persentage / 100;
+            int top100000Count = passwordsCount * Top100000Persentage / 100;
+            int randomPasswordsCount = passwordsCount * RandomPasswordsPersentage / 100;
+            while (result.Count < top100Count)
+            {
+                result.Add(_top100Passwords.ElementAt(random.Next(0, _top100Passwords.Count)));
+            }
+            while(result.Count < top100Count + top100000Count)
+            {
+                result.Add(_top100000Passwords.ElementAt(random.Next(0, _top100000Passwords.Count)));
+            }
+            while (result.Count < top100Count + top100000Count + randomPasswordsCount)
+            {
+                result.Add(CreateRandomPassword(random.Next(8, 18)));
+            }
+            while (result.Count < passwordsCount)
+            {
+                result.Add(passwordGeneratingRules.ElementAt(random.Next(0, passwordGeneratingRules.Count))
+                    .Invoke(_top100000Passwords.ElementAt(random.Next(0, _top100000Passwords.Count))));
+            }
+
+            return result.Shuffle();
+        }
 
         private static string CreateRandomPassword(int length)
         {
