@@ -13,7 +13,7 @@ namespace Lab1
     {
         static void Main(string[] args)
         {
-            RunThirdTask();
+            RunFourthTask();
         }
 
         public static void RunFirstTask()
@@ -52,12 +52,53 @@ namespace Lab1
             var trigrams = JsonConvert.DeserializeObject<Dictionary<string, float>>(allText)
                 .Select(t => new EtalonMember(t.Key, t.Value)).ToList();
 
-            string thirdTaskEncryptedMessage = "EFFPQLEKVTVPCPYFLMVHQLUEWCNVWFYGHYTCETHQEKLPVMSAKSPVPAPVYWMVHQLUSPQLYWLASLFVWPQLMVHQLUPLRPSQLULQESPBLWPCSVRVWFLHLWFLWPUEWFYOTCMQYSLWOYWYETHQEKLPVMSAKSPVPAPVYWHEPPLUWSGYULEMQTLPPLUGUYOLWDTVSQETHQEKLPVPVSMTLEUPQEPCYAMEWWYTYWDLUULTCYWPQLSEOLSVOHTLUYAPVWLYGDALSSVWDPQLNLCKCLRQEASPVILSLEUMQBQVMQCYAHUYKEKTCASLFPYFLMVHQLUPQLHULIVYASHEUEDUEHQBVTTPQLVWFLRYGMYVWMVFLWMLSPVTTBYUNESESADDLSPVYWCYAMEWPUCPYFVIVFLPQLOLSSEDLVWHEUPSKCPQLWAOKLUYGMQEUEMPLUSVWENLCEWFEHHTCGULXALWMCEWETCSVSPYLEMQYGPQLOMEWCYAGVWFEBECPYASLQVDQLUYUFLUGULXALWMCSPEPVSPVMSBVPQPQVSPCHLYGMVHQLUPQLWLRPOEDVMETBYUFBVTTPENLPYPQLWLRPTEKLWZYCKVPTCSTESQPQULLGYAUMEHVPETFWMEHVPETBZMEHVPETB";
-            //string thirdTaskKey = "EKMFLGDQVZNTOWYHXUSPAIBRCJ".ToLower();
-            //Console.WriteLine(new Substitution(new string(SingleByteXorAttacker.OneLetterEnglishFrequency.Select(c => c.Key).ToArray()), thirdTaskKey).Decrypt(thirdTaskEncryptedMessage.ToLower()));
+            string thirdTaskEncryptedMessage = "EFFPQLEKVTVPCPYFLMVHQLUEWCNVWFYGHYTCETHQEKLPVMSAKSPVPAPVYWMVHQLUSPQLYWLASLFVWPQLMVHQLUPLRPSQLULQESPBLWPCSVRVWFLHLWFLWPUEWFYOTCMQYSLWOYWYETHQEKLPVMSAKSPVPAPVYWHEPPLUWSGYULEMQTLPPLUGUYOLWDTVSQETHQEKLPVPVSMTLEUPQEPCYAMEWWYTYWDLUULTCYWPQLSEOLSVOHTLUYAPVWLYGDALSSVWDPQLNLCKCLRQEASPVILSLEUMQBQVMQCYAHUYKEKTCASLFPYFLMVHQLUPQLHULIVYASHEUEDUEHQBVTTPQLVWFLRYGMYVWMVFLWMLSPVTTBYUNESESADDLSPVYWCYAMEWPUCPYFVIVFLPQLOLSSEDLVWHEUPSKCPQLWAOKLUYGMQEUEMPLUSVWENLCEWFEHHTCGULXALWMCEWETCSVSPYLEMQYGPQLOMEWCYAGVWFEBECPYASLQVDQLUYUFLUGULXALWMCSPEPVSPVMSBVPQPQVSPCHLYGMVHQLUPQLWLRPOEDVMETBYUFBVTTPENLPYPQLWLRPTEKLWZYCKVPTCSTESQPQULLGYAUMEHVPETFWMEHVPETBZMEHVPETB";            
+            
+            string alphabet = new string(SingleByteXorAttacker.OneLetterEnglishFrequency.Select(c => c.Key).ToArray());
+            string thirdTaskKey = "EKMFLGDQVZNTOWYHXUSPAIBRCJ".ToLower();
+            var substitution = new Substitution(alphabet, new List<string> { thirdTaskKey });            
+            Console.WriteLine(substitution.Decrypt(thirdTaskEncryptedMessage.ToLower()));
+
+            //var substitutionAttacker = new SubstitutionAttacker(
+            //    encryptedText: thirdTaskEncryptedMessage,
+            //    individualSetMembersCount: 1,
+            //    minPopulationSize: 40,
+            //    maxPopulationSize: 100,
+            //    iterationsCount: 1000,
+            //    mutationPercentage: 0.02F,
+            //    bestPercentage: 30,
+            //    twoLettersFrequencies: bigrams,
+            //    threeLettersFrequencies: trigrams,
+            //    twoLettersFittingQuotientCoef: 0.5F,
+            //    threeLettersFittingQuotientCoef: 1.5F);
+
+            //List<IndividualSet> keySets = substitutionAttacker.Evaluate().Result;
+            //for(int i = 0; i < 10; i++)
+            //{
+            //    Console.WriteLine($"Key set {i}:");
+            //    keySets[i].ForEach(Console.WriteLine);
+            //    Console.WriteLine();
+            //}
+        }
+
+        public static void RunFourthTask()
+        {
+            string fourthTaskEncryptedMessage = "KZBWPFHRAFHMFSNYSMNOZYBYLLLYJFBGZYYYZYEKCJVSACAEFLMAJZQAZYHIJFUNHLCGCINWFIHHHTLNVZLSHSVOZDPYSMNYJXHMNODNHPATXFWGHZPGHCVRWYSNFUSPPETRJSIIZSAAOYLNEENGHYAMAZBYSMNSJRNGZGSEZLNGHTSTJMNSJRESFRPGQPSYFGSWZMBGQFBCCEZTTPOYNIVUJRVSZSCYSEYJWYHUJRVSZSCRNECPFHHZJBUHDHSNNZQKADMGFBPGBZUNVFIGNWLGCWSATVSSWWPGZHNETEBEJFBCZDPYJWOSFDVWOTANCZIHCYIMJSIGFQLYNZZSETSYSEUMHRLAAGSEFUSKBZUEJQVTDZVCFHLAAJSFJSCNFSJKCFBCFSPITQHZJLBMHECNHFHGNZIEWBLGNFMHNMHMFSVPVHSGGMBGCWSEZSZGSEPFQEIMQEZZJIOGPIOMNSSOFWSKCRLAAGSKNEAHBBSKKEVTZSSOHEUTTQYMCPHZJFHGPZQOZHLCFSVYNFYYSEZGNTVRAJVTEMPADZDSVHVYJWHGQFWKTSNYHTSZFYHMAEJMNLNGFQNFZWSKCCJHPEHZZSZGDZDSVHVYJWHGQFWKTSNYHTSZFYHMAEDNJZQAZSCHPYSKXLHMQZNKOIOKHYMKKEIKCGSGYBPHPECKCJJKNISTJJZMHTVRHQSGQMBWHTSPTHSNFQZKPRLYSZDYPEMGZILSDIOGGMNYZVSNHTAYGFBZZYJKQELSJXHGCJLSDTLNEHLYZHVRCJHZTYWAFGSHBZDTNRSESZVNJIVWFIVYSEJHFSLSHTLNQEIKQEASQJVYSEVYSEUYSMBWNSVYXEIKWYSYSEYKPESKNCGRHGSEZLNGHTSIZHSZZHCUJWARNEHZZIWHZDZMADNGPNSYFZUWZSLXJFBCGEANWHSYSEGGNIVPFLUGCEUWTENKCJNVTDPNXEIKWYSYSFHESFPAJSWGTYVSJIOKHRSKPEZMADLSDIVKKWSFHZBGEEATJLBOTDPMCPHHVZNYVZBGZSCHCEZZTWOOJMBYJSCYFRLSZSCYSEVYSEUNHZVHRFBCCZZYSEUGZDCGZDGMHDYNAFNZHTUGJJOEZBLYZDHYSHSGJMWZHWAFTIAAY";
+
+            var basePath = $"{Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent}\\Task3\\Data";
+            string allText = File.ReadAllText($"{basePath}\\bigrams_percentages.json");
+            var bigrams = JsonConvert.DeserializeObject<Dictionary<string, float>>(allText)
+                .Select(t => new EtalonMember(t.Key, t.Value)).ToList();
+            allText = File.ReadAllText($"{basePath}\\trigrams_percentages.json");
+            var trigrams = JsonConvert.DeserializeObject<Dictionary<string, float>>(allText)
+                .Select(t => new EtalonMember(t.Key, t.Value)).ToList();
+
+            //int individualSetMembersCount = new RepeatingKeyXorAttacker().GetKeyLength(fourthTaskEncryptedMessage);
+            int individualSetMembersCount = 4;
 
             var substitutionAttacker = new SubstitutionAttacker(
-                encryptedText: thirdTaskEncryptedMessage,
+                encryptedText: fourthTaskEncryptedMessage,
+                individualSetMembersCount: individualSetMembersCount,
                 minPopulationSize: 40,
                 maxPopulationSize: 100,
                 iterationsCount: 1000,
@@ -68,8 +109,13 @@ namespace Lab1
                 twoLettersFittingQuotientCoef: 0.5F,
                 threeLettersFittingQuotientCoef: 1.5F);
 
-            List<Individual> keys = substitutionAttacker.Evaluate().Result;
-            keys.OrderByDescending(k => k.Fitness).Take(10).Select(k => k.Key).ToList().ForEach(Console.WriteLine);
+            List<IndividualSet> keySets = substitutionAttacker.Evaluate().Result;
+            for (int i = 0; i < 10; i++)
+            {
+                Console.WriteLine($"Key set {i}:");
+                keySets[i].ForEach(Console.WriteLine);
+                Console.WriteLine();
+            }
         }
     }
 }

@@ -5,7 +5,6 @@ namespace Lab1.Task3
     public class Individual
     {
         public string Key { get; }
-        public double Fitness { get; set; }
 
         public Individual(string key, int neededKeyLength)
         {

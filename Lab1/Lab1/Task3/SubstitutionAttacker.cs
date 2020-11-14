@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,6 +14,7 @@ namespace Lab1.Task3
 
         public string Alphabet { get; }
         public string EncryptedText { get; }
+        public int IndividualSetMembersCount { get; }
         public int MinPopulationSize { get; }
         public int MaxPopulationSize { get; }
         public int IterationsCount { get; }
@@ -25,6 +25,7 @@ namespace Lab1.Task3
 
         public SubstitutionAttacker(
             string encryptedText,
+            int individualSetMembersCount,
             int minPopulationSize,
             int maxPopulationSize,
             int iterationsCount,
@@ -37,6 +38,10 @@ namespace Lab1.Task3
         {
             EncryptedText = encryptedText ?? throw new ArgumentNullException(nameof(encryptedText));
             EncryptedText = EncryptedText.ToLower();
+
+            if(individualSetMembersCount <= 0)
+                throw new ArgumentException($"{nameof(individualSetMembersCount)} must be  greather than 0");
+            IndividualSetMembersCount = individualSetMembersCount;
 
             if (minPopulationSize <= 0)
                 throw new ArgumentException($"{nameof(minPopulationSize)} must be  greather than 0");
@@ -70,15 +75,15 @@ namespace Lab1.Task3
             ThreeLettersFittingQuotientCoef = threeLettersFittingQuotientCoef;
         }
 
-        public async Task<List<Individual>> Evaluate()
+        public async Task<List<IndividualSet>> Evaluate()
         {
-            Dictionary<string, Task<Individual>> population =
-                GeneratePoputation(MaxPopulationSize).ToDictionary(i => i.Key, i => CalcFitness(i));
-            await Task.WhenAll(population.Values);
+            List<Task<IndividualSet>> population =
+                GeneratePoputation(MaxPopulationSize).Select(i => CalcFitness(i)).ToList();
+            await Task.WhenAll(population);
 
             var random = new Random();
-            IOrderedEnumerable<KeyValuePair<string, Task<Individual>>> orderedPopulation;
-            IEnumerable<KeyValuePair<string, Task<Individual>>> best;
+            IOrderedEnumerable<Task<IndividualSet>> orderedPopulation;
+            IEnumerable<Task<IndividualSet>> best;
             int currentBestCount;
             int totalGenerated = 0;
             int mutatedCount = 0;
@@ -87,13 +92,15 @@ namespace Lab1.Task3
             for (int i = 0; i < IterationsCount; i++)
             {
                 Console.WriteLine($"Iteration: {i}");
-                orderedPopulation = population.OrderByDescending(i => i.Value.Result.Fitness);
-                Console.WriteLine($"Best key: {population.First().Key}");
+                orderedPopulation = population.OrderByDescending(i => i.Result.Fitness);
+                Console.WriteLine("Best keys:");
+                foreach(Individual individual in orderedPopulation.First().Result)
+                    Console.WriteLine(individual.Key);
 
                 currentBestCount = orderedPopulation.Count() * BestPercentage / 100;                
                 best = orderedPopulation.Take(currentBestCount);
 
-                population = new Dictionary<string, Task<Individual>>(best);
+                population = new List<Task<IndividualSet>>(best);
                 totalGenerated = population.Count;
                 mutatedCount = 0;
                 needsMutation = false;
@@ -104,111 +111,125 @@ namespace Lab1.Task3
                     needsMutation = mutatedCount * 100 / (double)(totalGenerated - population.Count) < MutationPercentage;
                     if (needsMutation)
                         mutatedCount += 2;
-                    Crossover(best.ElementAt(random.Next(0, currentBestCount)).Value.Result,
-                        best.ElementAt(random.Next(0, currentBestCount)).Value.Result,
+                    Crossover(best.ElementAt(random.Next(0, currentBestCount)).Result,
+                        best.ElementAt(random.Next(0, currentBestCount)).Result,
                         needsMutation)
                         .ForEach(i =>
                         {
-                            population.TryAdd(i.Key, CalcFitness(i));
+                            population.Add(CalcFitness(i));
                         });
                     totalGenerated += 2;
                 }
-                await Task.WhenAll(population.Values);
+                await Task.WhenAll(population);
                 sw.Stop();
                 Console.WriteLine($"Population generation time: {sw.ElapsedMilliseconds} ms");
+
+                population = population.Distinct(new IndividualSetTasksComparer()).ToList();
                 
                 sw.Reset();
                 Console.WriteLine();
             }
 
-            return population.Values.Select(val => val.Result).ToList();
+            return population.Select(val => val.Result).ToList();
         }
 
-        private IEnumerable<Individual> GeneratePoputation(int size)
+        private IEnumerable<IndividualSet> GeneratePoputation(int size)
         {
             var random = new Random();
-            var population = new HashSet<Individual>(size, new IndividualsComparer());
+            var population = new HashSet<IndividualSet>(size, new IndividualSetsComparer());
+            IndividualSet individualSet;
             Individual individual;
             while (population.Count != size)
             {
-                individual = new Individual(new string(Alphabet.ToCharArray().OrderBy(s => (random.Next(2) % 2) == 0).ToArray()), Alphabet.Length);
-                population.Add(individual);
+                individualSet = new IndividualSet(IndividualSetMembersCount);
+                while(individualSet.Count != IndividualSetMembersCount)
+                {
+                    individual = new Individual(new string(Alphabet.ToCharArray().OrderBy(s => (random.Next(2) % 2) == 0).ToArray()), Alphabet.Length);
+                    individualSet.Add(individual);
+                }
+                population.Add(individualSet);
             }
 
             return population;
         }
 
-        private async Task<Individual> CalcFitness(Individual individual)
+        private async Task<IndividualSet> CalcFitness(IndividualSet individualSet)
         {
-            var substitution = new Substitution(Alphabet, individual.Key);
+            var substitution = new Substitution(Alphabet, individualSet.Select(i => i.Key).ToList());
             string decryptedMessage = substitution.Decrypt(EncryptedText);
 
             IEnumerable<double> results = await Task.WhenAll(
                 CalcFittingQuotient(decryptedMessage, _twoLettersFrequencies),
                 CalcFittingQuotient(decryptedMessage, _threeLettersFrequencies));
 
-            individual.Fitness = TwoLettersFittingQuotientCoef * results.ElementAt(0) +
+            individualSet.Fitness = TwoLettersFittingQuotientCoef * results.ElementAt(0) +
                 ThreeLettersFittingQuotientCoef * results.ElementAt(1);
 
-            return individual;
+            return individualSet;
         }
 
-        private List<Individual> Crossover(Individual first, Individual second, bool needsMutation = false)
+        private List<IndividualSet> Crossover(IndividualSet firstSet, IndividualSet secondSet, bool needsMutation = false)
         {
-            char[] firstChildKey = new char[Alphabet.Length];
-            char[] secondChildKey = new char[Alphabet.Length];
+            IndividualSet firstChildSet = new IndividualSet(IndividualSetMembersCount);
+            IndividualSet secondChildSet = new IndividualSet(IndividualSetMembersCount);
 
-            LinkedList<char> firstKeyCopy = new LinkedList<char>(first.Key);
-            LinkedList<char> secondKeyCopy = new LinkedList<char>(second.Key);
             var random = new Random();
-
-            List<(int index, int indicator)> positions = Enumerable.Range(0, Alphabet.Length)
-                .Select(i => (i, random.Next(0, 2))).ToList();
-            foreach((int index, int indicator) in positions)
+            char[] firstChildKey, secondChildKey;
+            LinkedList<char> firstKeyCopy, secondKeyCopy;
+            List<(int index, int indicator)> positions;
+            for (int keyIndex = 0; keyIndex < firstSet.Count; keyIndex++)
             {
-                if (indicator == 0)
+                firstChildKey = new char[Alphabet.Length];
+                secondChildKey = new char[Alphabet.Length];
+
+                firstKeyCopy = new LinkedList<char>(firstSet[keyIndex].Key);
+                secondKeyCopy = new LinkedList<char>(secondSet[keyIndex].Key);               
+
+                positions = Enumerable.Range(0, Alphabet.Length)
+                    .Select(i => (i, random.Next(0, 2))).ToList();
+                foreach ((int letterIndex, int indicator) in positions)
                 {
-                    firstChildKey[index] = first.Key[index];
-                    secondKeyCopy.Remove(first.Key[index]);
+                    if (indicator == 0)
+                    {
+                        firstChildKey[letterIndex] = firstSet[keyIndex].Key[letterIndex];
+                        secondKeyCopy.Remove(firstSet[keyIndex].Key[letterIndex]);
+                    }
+                    else
+                    {
+                        secondChildKey[letterIndex] = secondSet[keyIndex].Key[letterIndex];
+                        firstKeyCopy.Remove(secondSet[keyIndex].Key[letterIndex]);
+                    }
                 }
-                else
+
+                foreach ((int index, int indicator) in positions)
                 {
-                    secondChildKey[index] = second.Key[index];
-                    firstKeyCopy.Remove(second.Key[index]);
+                    if (indicator == 1)
+                    {
+                        firstChildKey[index] = secondKeyCopy.First.Value;
+                        secondKeyCopy.RemoveFirst();
+                    }
+                    else
+                    {
+                        secondChildKey[index] = firstKeyCopy.First.Value;
+                        firstKeyCopy.RemoveFirst();
+                    }
                 }
+
+                if (needsMutation)
+                {
+                    int randomPos = random.Next(0, Alphabet.Length);
+                    int firstLetterIndex = random.Next(0, randomPos);
+                    int secondLetterIndex = random.Next(randomPos, Alphabet.Length);
+
+                    Swap(firstChildKey, firstLetterIndex, secondLetterIndex);
+                    Swap(secondChildKey, firstLetterIndex, secondLetterIndex);
+                }
+
+                firstChildSet.Add(new Individual(new string(firstChildKey), Alphabet.Length));
+                secondChildSet.Add(new Individual(new string(secondChildKey), Alphabet.Length));
             }
 
-            foreach ((int index, int indicator) in positions)
-            {
-                if (indicator == 1)
-                {
-                    firstChildKey[index] = secondKeyCopy.First.Value;
-                    secondKeyCopy.RemoveFirst();
-                }
-                else
-                {
-                    secondChildKey[index] = firstKeyCopy.First.Value;
-                    firstKeyCopy.RemoveFirst();
-                }
-            }
-
-            if (needsMutation)
-            {
-                int randomPos = random.Next(0, Alphabet.Length);
-                int firstLetterIndex = random.Next(0, randomPos);
-                int secondLetterIndex = random.Next(randomPos, Alphabet.Length);
-
-                Swap(firstChildKey, firstLetterIndex, secondLetterIndex);
-                Swap(secondChildKey, firstLetterIndex, secondLetterIndex);
-            }
-
-            var result = new List<Individual>
-            {
-                new Individual(new string(firstChildKey), Alphabet.Length),
-                new Individual(new string(secondChildKey), Alphabet.Length)
-            };
-
-            return result;
+            return new List<IndividualSet> { firstChildSet, secondChildSet };
 
             void Swap(char[] childKey, int firstLetterIndex, int secondLetterIndex)
             {
@@ -239,19 +260,6 @@ namespace Lab1.Task3
             }
 
             return Task.FromResult(tempDeviationSum / etalons.Count);
-        }
-
-        class IndividualsComparer : IEqualityComparer<Individual>
-        {
-            public bool Equals([AllowNull] Individual x, [AllowNull] Individual y)
-            {
-                return x.Key.Equals(y.Key, StringComparison.OrdinalIgnoreCase);
-            }
-
-            public int GetHashCode([DisallowNull] Individual obj)
-            {
-                return obj.Key.ToLower().GetHashCode();
-            }
         }
     }
 }
