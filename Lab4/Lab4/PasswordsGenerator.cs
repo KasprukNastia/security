@@ -111,7 +111,7 @@ namespace Lab4
             string[] lat_low = { "a", "b", "v", "g", "d", "e", "zh", "z", "i", "y", "k", "l", "m", "n", "o", "p", "r", "s", "t", "u", "f", "kh", "ts", "ch", "sh", "shch", "y", "yu", "ya" };
             string[] rus_up = { "А", "Б", "В", "Г", "Д", "Е", "Ж", "З", "И", "Й", "К", "Л", "М", "Н", "О", "П", "Р", "С", "Т", "У", "Ф", "Х", "Ц", "Ч", "Ш", "Щ", "Ы", "Ю", "Я" };
             string[] rus_low = { "а", "б", "в", "г", "д", "е", "ж", "з", "и", "й", "к", "л", "м", "н", "о", "п", "р", "с", "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "ы", "ю", "я" };
-            for (int i = 0; i <= lat_up.Length; i++)
+            for (int i = 0; i < lat_up.Length; i++)
             {
                 str = str.Replace(lat_up[i], rus_up[i]);
                 str = str.Replace(lat_low[i], rus_low[i]);

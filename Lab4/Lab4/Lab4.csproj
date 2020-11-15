@@ -6,11 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Data\top_100.txt" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="Data\top_100.txt" />
+    <PackageReference Include="CsvHelper" Version="16.0.0" />
+    <PackageReference Include="Konscious.Security.Cryptography.Argon2" Version="1.2.1" />
   </ItemGroup>
 
 </Project>
