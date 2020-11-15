@@ -34,8 +34,7 @@ namespace Lab4
 
             hasher = new Argon2idHasher();
             passwordGenerator.GeneratePasswords(passwordsCount: passwordsPerFile)
-                .Select(p => hasher.GetHashedRecord(p))
-                .WriteListToCsvFile($"{basePath}\\argon2id_hashed.csv");
+                .ForEach(p => hasher.GetHashedRecord(p).AppendRecordToCsvFile($"{basePath}\\argon2id_hashed.csv"));
         }
     }
 }
