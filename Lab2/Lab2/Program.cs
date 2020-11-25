@@ -11,6 +11,11 @@ namespace Lab2
     {
         static void Main(string[] args)
         {
+            
+        }
+
+        public static void Demonstrate()
+        {
             byte[] message1 = "Reusing the same key in streaming chiphers is a big mistake!".ToByteArray();
             byte[] message2 = "Really? Well, I won't do that again".ToByteArray();
             byte[] key = GenerateKey();
@@ -30,30 +35,6 @@ namespace Lab2
             {
                 Console.WriteLine(
                     $"[{i}]: {Encoding.UTF8.GetString(Xor(cribWord.ToByteArray(), mes1mes2.Skip(i).Take(mes1mes2.Length - i).ToArray()))}");
-            }
-        }
-
-        public static void Demonstrate()
-        {
-            using var salsa20 = new Salsa20();
-            var key = GenerateKey();
-
-            string message1 = "Hi! How are you? What are you doing?";
-            byte[] message1Bytes = Encoding.UTF8.GetBytes(message1);
-            string message2 = "I am fine, super cool. Bla-bla-bla. And how are you?";
-            byte[] message2Bytes = Encoding.UTF8.GetBytes(message2);
-
-            var encryptor1 = salsa20.CreateEncryptor(key, new byte[8]);
-            var encryptor2 = salsa20.CreateEncryptor(key, new byte[8]);
-
-            var message1Enc = encryptor1.TransformFinalBlock(message1Bytes, 0, message1.Length);
-            var message2Enc = encryptor2.TransformFinalBlock(message2Bytes, 0, message2.Length);
-
-            byte[] mes1mes2 = Xor(message1Enc, message2Enc);
-
-            for(int i = 0; i < mes1mes2.Length - 3; i++)
-            {
-                Console.WriteLine($"[{i}]: {Encoding.UTF8.GetString(Xor(message1Bytes, mes1mes2))}");
             }
         }
 
