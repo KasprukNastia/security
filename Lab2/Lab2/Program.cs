@@ -1,6 +1,7 @@
 ﻿using Logos.Utility.Security.Cryptography;
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -10,12 +11,26 @@ namespace Lab2
     {
         static void Main(string[] args)
         {
-            var message1Enc = "ad924af7a9cdaf3a1bb0c3fe1a20a3f367d82b0f05f8e75643ba688ea2ce8ec88f4762fbe93b50bf5138c7b699".ToByteArray();
-            var message2Enc = "a59a0eaeb4d1fc325ab797b31425e6bc66d36e5b18efe8060cb32edeaad68180db4979ede43856a24c7d".ToByteArray();
+            byte[] message1 = "Reusing the same key in streaming chiphers is a big mistake!".ToByteArray();
+            byte[] message2 = "Really? Well, I won't do that again".ToByteArray();
+            byte[] key = GenerateKey();
 
-            var mes1mes2 = Xor(message1Enc, message2Enc);
+            using var salsa20 = new Salsa20();
 
-            Console.WriteLine(Encoding.UTF8.GetString(Xor("the".ToByteArray(), mes1mes2)));
+            ICryptoTransform encryptor1 = salsa20.CreateEncryptor(key, new byte[8]);
+            ICryptoTransform encryptor2 = salsa20.CreateEncryptor(key, new byte[8]);
+
+            byte[] message1Enc = encryptor1.TransformFinalBlock(message1, 0, message1.Length);
+            byte[] message2Enc = encryptor2.TransformFinalBlock(message2, 0, message2.Length);
+
+            byte[] mes1mes2 = Xor(message1Enc, message2Enc);
+
+            string cribWord = "Well";
+            for (int i = 0; i < mes1mes2.Length - cribWord.Length; i++)
+            {
+                Console.WriteLine(
+                    $"[{i}]: {Encoding.UTF8.GetString(Xor(cribWord.ToByteArray(), mes1mes2.Skip(i).Take(mes1mes2.Length - i).ToArray()))}");
+            }
         }
 
         public static void Demonstrate()
@@ -34,9 +49,12 @@ namespace Lab2
             var message1Enc = encryptor1.TransformFinalBlock(message1Bytes, 0, message1.Length);
             var message2Enc = encryptor2.TransformFinalBlock(message2Bytes, 0, message2.Length);
 
-            var mes1mes2 = Xor(message1Enc, message2Enc);
+            byte[] mes1mes2 = Xor(message1Enc, message2Enc);
 
-            Console.WriteLine(Encoding.UTF8.GetString(Xor(message1Bytes, mes1mes2)));
+            for(int i = 0; i < mes1mes2.Length - 3; i++)
+            {
+                Console.WriteLine($"[{i}]: {Encoding.UTF8.GetString(Xor(message1Bytes, mes1mes2))}");
+            }
         }
 
         public static byte[] GenerateKey()
@@ -49,27 +67,12 @@ namespace Lab2
 
         public static byte[] Xor(byte[] first, byte[] second)
         {
-            byte[] smaller, bigger;
-            if(first.Length < second.Length)
-            {
-                smaller = first;
-                bigger = second;
-            }
-            else
-            {
-                smaller = second;
-                bigger = first;
-            }
+            int length = first.Length < second.Length ? first.Length : second.Length;
 
-            byte[] result = new byte[bigger.Length];
-            int smallerCounter = 0;
-            for (int biggerCounter = 0; biggerCounter < bigger.Length; biggerCounter++)
+            var result = new byte[length];
+            for(int i = 0; i < length; i++)
             {
-                result[biggerCounter] = (byte)(bigger[biggerCounter] ^ smaller[smallerCounter]);
-
-                smallerCounter++;
-                if (smallerCounter == smaller.Length)
-                    smallerCounter = 0;
+                result[i] = (byte)(first[i] ^ second[i]);
             }
 
             return result;
