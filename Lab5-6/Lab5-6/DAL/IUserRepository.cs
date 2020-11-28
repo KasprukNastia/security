@@ -9,6 +9,8 @@ namespace Lab5_6.DAL
 
         List<User> GetAllUsers();
 
-        User GetUserByCreds(string email, string passwordHash);
+        User GetUserByEmail(string email);
+
+        bool UpdateSensitiveUserData(User user);
     }
 }

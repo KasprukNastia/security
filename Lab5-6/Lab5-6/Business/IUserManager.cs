@@ -6,5 +6,7 @@ namespace Lab5_6.Business
     {
         bool CreateUser(UserViewModel registerUserViewModel);
         bool LoginUser(UserViewModel registerUserViewModel);
+        bool StoreSensitiveData(SensitiveDataViewModel sensitiveDataViewModel);
+        SensitiveDataViewModel GetSensitiveData(string userEmail);
     }
 }

@@ -10,7 +10,7 @@ namespace Lab5_6.Controllers
     {
         private readonly IUserManager _userManager;
 
-        public AccountController(IUserManager userManager, IUserRepository userRepository)
+        public AccountController(IUserManager userManager)
         {
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
         }
@@ -42,7 +42,6 @@ namespace Lab5_6.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public IActionResult Login(UserViewModel loginUserModel)
         {
             if (ModelState.IsValid)

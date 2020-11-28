@@ -15,14 +15,29 @@ namespace Lab5_6.DAL
 
         public List<User> GetAllUsers() => _users;
 
-        public User GetUserByCreds(string email, string passwordHash)
+        public User GetUserByEmail(string email)
         {
-            return _users.FirstOrDefault(user => user.Email.Equals(email) && user.PasswordHash.Equals(passwordHash));
+            return _users.FirstOrDefault(user => user.Email.Equals(email));
         }
 
         public bool StoreUser(User user)
         {
             _users.Add(user);
+            return true;
+        }
+
+        public bool UpdateSensitiveUserData(User user)
+        {
+            User foundUser = GetUserByEmail(user.Email);
+
+            if (foundUser == null)
+                return false;
+
+            foundUser.PhoneNumberEncrypted = user.PhoneNumberEncrypted;
+            foundUser.PhoneNumberNonce = user.PhoneNumberNonce;
+            foundUser.CreditCardEncrypted = user.CreditCardEncrypted;
+            foundUser.CreditCardNonce = user.CreditCardNonce;
+
             return true;
         }
     }

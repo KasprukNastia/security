@@ -1,0 +1,23 @@
+﻿@model Lab5_6.Models.SensitiveDataViewModel
+<h2>Store sensitive data</h2>
+<form method="post" asp-controller="Store" asp-action="StoreSensitiveData">
+    <div asp-validation-summary="ModelOnly"></div>
+    <div>
+        <label asp-for="Email"></label><br />
+        <input asp-for="Email" />
+        <span asp-validation-for="Email"></span>
+    </div>
+    <div>
+        <label asp-for="PhoneNumber"></label><br />
+        <input asp-for="PhoneNumber" />
+        <span asp-validation-for="PhoneNumber"></span>
+    </div>
+    <div>
+        <label asp-for="CreditCard"></label><br />
+        <input asp-for="CreditCard" />
+        <span asp-validation-for="CreditCard"></span>
+    </div>
+    <div>
+        <input type="submit" value="Store" />
+    </div>
+</form>
